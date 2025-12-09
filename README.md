@@ -3,7 +3,7 @@ Proje Hakkında
 Bu proje, ASP.NET Core MVC kullanılarak geliştirilmiş kapsamlı bir Spor Salonu Yönetim ve Randevu Sistemidir. Sistem; spor salonlarının sunduğu hizmetleri, antrenörlerin uzmanlık alanlarını ve üyelerin randevularını yönetmeyi hedefler. Ayrıca yapay zeka entegrasyonu ile üyelere kişiselleştirilmiş egzersiz önerileri sunar.
 
 
-🚀 Özellikler
+ Özellikler
 
 Salon ve Hizmet Yönetimi: Salonların çalışma saatleri, sunduğu hizmetler (Pilates, Yoga, Fitness vb.), süreleri ve ücretleri tanımlanabilir.
 
@@ -25,7 +25,7 @@ REST API & LINQ: Antrenörleri listeleme veya uygunluk durumunu sorgulama gibi i
 
 Yapay Zeka Entegrasyonu: Kullanıcıların vücut bilgilerine göre egzersiz önerisi almasını sağlayan yapay zeka modülü içerir.
 
-🛠 Kullanılan Teknolojiler
+ Kullanılan Teknolojiler
 Projede güncel ve modern web teknolojileri kullanılmıştır:
 
 
