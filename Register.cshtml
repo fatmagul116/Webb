@@ -1,0 +1,156 @@
+@model ProjeOdeviWeb_G231210048.Models.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Kayıt Ol";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0 mt-4">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0">Kayıt Formu</h3>
+            </div>
+            <div class="card-body">
+                <form asp-action="Register">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label">Ad Soyad</label>
+                        <input asp-for="FullName" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control" type="email" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Şifre</label>
+                        <input asp-for="Password" class="form-control" type="password" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Role" class="form-label fw-bold">Hesap Türü</label>
+                        <select asp-for="Role" class="form-select" id="roleSelect">
+                            <option value="Uye">Üye (Sporcu)</option>
+                            <option value="Antrenör">Antrenör (Eğitmen)</option>
+                        </select>
+                    </div>
+
+                    <div id="memberFields">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label asp-for="Height" class="form-label">Boy (cm)</label>
+                                <input asp-for="Height" class="form-control" placeholder="175" />
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label asp-for="Weight" class="form-label">Kilo (kg)</label>
+                                <input asp-for="Weight" class="form-control" placeholder="70" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="trainerFields" style="display:none;" class="bg-light p-3 rounded border mb-3">
+                        <h6 class="text-primary border-bottom pb-2">Eğitmen Detayları</h6>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Uzmanlık Alanları (Birden fazla seçebilirsiniz)</label>
+                            <div class="border bg-white p-2 rounded d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedSpecializations" value="Fitness" id="specFit">
+                                    <label class="form-check-label" for="specFit">Fitness</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedSpecializations" value="Pilates" id="specPil">
+                                    <label class="form-check-label" for="specPil">Pilates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedSpecializations" value="Yoga" id="specYog">
+                                    <label class="form-check-label" for="specYog">Yoga</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedSpecializations" value="Kickboks" id="specKick">
+                                    <label class="form-check-label" for="specKick">Kickboks</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedSpecializations" value="Yüzme" id="specSwim">
+                                    <label class="form-check-label" for="specSwim">Yüzme</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedSpecializations" value="Zumba" id="specZum">
+                                    <label class="form-check-label" for="specZum">Zumba</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Mesai Başlangıç</label>
+                                <input asp-for="StartTime" type="time" class="form-control" value="09:00" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Mesai Bitiş</label>
+                                <input asp-for="EndTime" type="time" class="form-control" value="18:00" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-danger">İzin Günleri (Seçiniz)</label>
+                            <div class="border bg-white p-2 rounded d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Monday" id="Mon">
+                                    <label class="form-check-label" for="Mon">Pzt</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Tuesday" id="Tue">
+                                    <label class="form-check-label" for="Tue">Sal</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Wednesday" id="Wed">
+                                    <label class="form-check-label" for="Wed">Çar</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Thursday" id="Thu">
+                                    <label class="form-check-label" for="Thu">Per</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Friday" id="Fri">
+                                    <label class="form-check-label" for="Fri">Cum</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Saturday" id="Sat">
+                                    <label class="form-check-label" for="Sat">Cmt</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedDaysOff" value="Sunday" id="Sun">
+                                    <label class="form-check-label" for="Sun">Paz</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Kayıt Ol</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // ROL DEĞİŞİNCE ALANLARI GİZLE/GÖSTER
+        document.getElementById('roleSelect').addEventListener('change', function () {
+            var role = this.value;
+            if (role === 'Antrenör') {
+                document.getElementById('memberFields').style.display = 'none';
+                document.getElementById('trainerFields').style.display = 'block';
+            } else {
+                document.getElementById('memberFields').style.display = 'block';
+                document.getElementById('trainerFields').style.display = 'none';
+            }
+        });
+    </script>
+}
