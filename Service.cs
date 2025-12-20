@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -13,6 +12,7 @@ namespace ProjeOdeviWeb_G231210048.Models
         [Display(Name = "Hizmet Adı")]
         public string Name { get; set; }
 
+        // ✅ BURASI DurationMinutes OLARAK KALIYOR
         [Required]
         [Range(15, 240, ErrorMessage = "Süre 15 ile 240 dakika arasında olmalıdır.")]
         [Display(Name = "Süre (Dakika)")]
@@ -24,11 +24,9 @@ namespace ProjeOdeviWeb_G231210048.Models
         [Display(Name = "Ücret (TL)")]
         public decimal Price { get; set; }
 
-        // İlişkiler
         public int GymId { get; set; }
         public virtual Gym? Gym { get; set; }
 
-        // Eski hali: public virtual ICollection<Trainer> Trainers { get; set; }
         public virtual ICollection<Trainer>? Trainers { get; set; }
     }
 }
