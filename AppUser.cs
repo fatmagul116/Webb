@@ -26,6 +26,11 @@ namespace ProjeOdeviWeb_G231210048.Models
         public double? Height { get; set; }
         public double? Weight { get; set; }
 
+        
+         public int? Age { get; set; }      // Yaş
+         public string? Gender { get; set; } // Cinsiyet (Kadın/Erkek)
+       
+
         [Display(Name = "Hesap Onaylı mı?")]
         public bool IsApproved { get; set; } = false;
 
