@@ -1,221 +1,139 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProjeOdeviWeb_G231210048.Data;
 using ProjeOdeviWeb_G231210048.Models;
-using System.Security.Claims;
 
 namespace ProjeOdeviWeb_G231210048.Controllers
 {
-    [Authorize(Roles = "Antrenör")] // Sadece Antrenörler girebilir
-    public class TrainerController : Controller
+    public class TrainersController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public TrainerController(ApplicationDbContext context)
+        public TrainersController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // ==========================================
-        // 1. DASHBOARD (ÖZET EKRANI) - İSTEĞE BAĞLI
-        // ==========================================
-        // Antrenör panelinin ana sayfası burası olabilir
+        // ============================================================
+        // 1. VİTRİN KISMI (HERKES GÖREBİLİR)
+        // ============================================================
+
+        // GET: Trainers
         public async Task<IActionResult> Index()
         {
-            var trainerName = User.Identity.Name;
-            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
-            if (trainer == null) return RedirectToAction("Login", "Account");
-
-            // Hem Grup Derslerini hem Bireysel Randevuları görüntüle
-            var model = new
-            {
-                UpcomingSessions = await _context.Sessions
-                    .Where(s => s.TrainerId == trainer.Id && s.SessionDate > DateTime.Now)
-                    .OrderBy(s => s.SessionDate)
-                    .ToListAsync(),
-
-                PendingAppointments = await _context.Appointments
-                    .Include(a => a.AppUser) // Öğrenci bilgisi
-                    .Include(a => a.Service) // Hizmet bilgisi
-                    .Where(a => a.TrainerId == trainer.Id && a.Status == "Onay Bekliyor")
-                    .OrderBy(a => a.Date).ThenBy(a => a.Time)
-                    .ToListAsync()
-            };
-
-            return View(model);
+            // Antrenörleri ve bağlı oldukları spor salonunu getir
+            var trainers = _context.Trainers.Include(t => t.Gym);
+            return View(await trainers.ToListAsync());
         }
 
-        // ==========================================
-        // 2. GRUP DERSİ (SEANS) OLUŞTURMA
-        // ==========================================
-        public async Task<IActionResult> CreateSession()
+        // GET: Trainers/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            var trainerName = User.Identity.Name;
-            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
+            if (id == null) return NotFound();
 
-            if (trainer == null) return RedirectToAction("Index", "Home");
+            // BURASI GÜNCELLENDİ: Antrenörün Grup Derslerini (Sessions) de getiriyoruz.
+            var trainer = await _context.Trainers
+                .Include(t => t.Gym)
+                .Include(t => t.Sessions) // <-- Grup Dersleri Dahil Edildi
+                .FirstOrDefaultAsync(m => m.Id == id);
 
-            // --- UZMANLIK FİLTRESİ ---
-            var allServices = await _context.Services.ToListAsync();
-            var allowedServices = allServices
-                .Where(s => trainer.Specialization.Contains(s.Name, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            if (trainer == null) return NotFound();
 
-            if (!allowedServices.Any())
-            {
-                TempData["Error"] = "Uzmanlık alanınıza uygun hizmet bulunamadı.";
-                return RedirectToAction("Index");
-            }
+            // Sadece Gelecek Tarihli ve Onaylı Dersleri View'a göndermek için filtreleme yapabiliriz
+            // Ancak genellikle View tarafında filtrelemek daha esnek olur.
+            // Biz burada tümünü gönderiyoruz.
 
-            ViewBag.AllowedServices = new SelectList(allowedServices, "Name", "Name");
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateSession(Session model)
-        {
-            ModelState.Remove("Trainer"); // Trainer formdan gelmediği için validasyonu kaldır
-
-            var trainerName = User.Identity.Name;
-            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
-
-            if (trainer == null) return RedirectToAction("Login", "Account");
-
-            async Task RefillDropdown()
-            {
-                var allServices = await _context.Services.ToListAsync();
-                var allowed = allServices.Where(s => trainer.Specialization.Contains(s.Name, StringComparison.OrdinalIgnoreCase)).ToList();
-                ViewBag.AllowedServices = new SelectList(allowed, "Name", "Name");
-            }
-
-            // GÜVENLİK VE ÇAKIŞMA KONTROLLERİ
-            if (!trainer.Specialization.Contains(model.ClassName, StringComparison.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError("", "Sadece uzmanlık alanınızda ders açabilirsiniz!");
-                await RefillDropdown(); return View(model);
-            }
-
-            TimeSpan start = model.SessionDate.TimeOfDay;
-            TimeSpan end = start.Add(TimeSpan.FromMinutes(model.Duration));
-
-            if (start < new TimeSpan(9, 0, 0) || end > new TimeSpan(22, 0, 0))
-            {
-                ModelState.AddModelError("", "Seanslar 09:00 - 22:00 arasında olmalıdır.");
-                await RefillDropdown(); return View(model);
-            }
-
-            bool conflict = await _context.Sessions.AnyAsync(s =>
-                s.TrainerId == trainer.Id &&
-                s.SessionDate < model.SessionDate.AddMinutes(model.Duration) &&
-                s.SessionDate.AddMinutes(s.Duration) > model.SessionDate);
-
-            if (conflict)
-            {
-                ModelState.AddModelError("", "Bu saatte başka bir grup dersiniz var.");
-                await RefillDropdown(); return View(model);
-            }
-
-            if (ModelState.IsValid)
-            {
-                model.TrainerId = trainer.Id;
-                model.IsApproved = null;
-                model.CreatedAt = DateTime.Now;
-                model.CurrentCount = 0;
-
-                _context.Sessions.Add(model);
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = "Grup dersi talebi oluşturuldu.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            await RefillDropdown();
-            return View(model);
-        }
-
-        // ==========================================
-        // 3. BİREYSEL RANDEVULARIM (YENİ EKLENDİ)
-        // ==========================================
-        public async Task<IActionResult> MyAppointments()
-        {
-            var trainerName = User.Identity.Name;
-            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
-            if (trainer == null) return RedirectToAction("Login", "Account");
-
-            // Hocaya ait tüm bireysel randevuları getir
-            var appointments = await _context.Appointments
-                .Include(a => a.AppUser) // Öğrenci Adı
-                .Include(a => a.Service) // Ders Türü
-                .Where(a => a.TrainerId == trainer.Id)
-                .OrderByDescending(a => a.Date).ThenBy(a => a.Time)
-                .ToListAsync();
-
-            return View(appointments);
-        }
-
-        // Bireysel Randevu Onayla
-        [HttpPost]
-        public async Task<IActionResult> ApproveAppointment(int id)
-        {
-            var appt = await _context.Appointments.FindAsync(id);
-            if (appt != null)
-            {
-                appt.Status = "Onaylandı";
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Bireysel randevu onaylandı.";
-            }
-            return RedirectToAction(nameof(MyAppointments));
-        }
-
-        // Bireysel Randevu Reddet
-        [HttpPost]
-        public async Task<IActionResult> RejectAppointment(int id)
-        {
-            var appt = await _context.Appointments.FindAsync(id);
-            if (appt != null)
-            {
-                appt.Status = "Reddedildi";
-                await _context.SaveChangesAsync();
-                TempData["Warning"] = "Bireysel randevu reddedildi.";
-            }
-            return RedirectToAction(nameof(MyAppointments));
-        }
-
-        // ==========================================
-        // 4. PROFİL DÜZENLEME
-        // ==========================================
-        public async Task<IActionResult> EditProfile()
-        {
-            var trainerName = User.Identity.Name;
-            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
-            if (trainer == null) return RedirectToAction("Index", "Home");
-
-            ViewBag.GymList = new SelectList(_context.Gyms, "Id", "Address", trainer.GymId);
             return View(trainer);
         }
 
+        // ============================================================
+        // 2. YÖNETİM KISMI (SADECE ADMIN)
+        // ============================================================
+
+        // GET: Trainers/Create
+        // Not: Genelde antrenörler "Kayıt Ol" sayfasından eklenir. 
+        // Burası manuel ekleme içindir.
+        [Authorize(Roles = "Admin")]
+    
+        // GET: Trainers/Edit/5
+        // Admin düzenleyebilir. (İstenirse antrenörün kendisi de düzenleyebilsin diye yetki genişletilebilir)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var trainer = await _context.Trainers.FindAsync(id);
+            if (trainer == null) return NotFound();
+
+            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Address", trainer.GymId);
+            return View(trainer);
+        }
+
+        // POST: Trainers/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditProfile(Trainer model)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FullName,Specialization,AvailableFrom,AvailableTo,GymId,DaysOff")] Trainer trainer)
         {
-            var trainerName = User.Identity.Name;
-            var existingTrainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
-            if (existingTrainer == null) return RedirectToAction("Index", "Home");
+            if (id != trainer.Id) return NotFound();
 
-            existingTrainer.Specialization = model.Specialization;
-            existingTrainer.AvailableFrom = model.AvailableFrom;
-            existingTrainer.AvailableTo = model.AvailableTo;
-            existingTrainer.DaysOff = model.DaysOff;
-            existingTrainer.GymId = model.GymId;
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(trainer);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!TrainerExists(trainer.Id)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Address", trainer.GymId);
+            return View(trainer);
+        }
 
-            _context.Update(existingTrainer);
-            await _context.SaveChangesAsync();
+        // GET: Trainers/Delete/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
 
-            TempData["Success"] = "Profil güncellendi.";
+            var trainer = await _context.Trainers
+                .Include(t => t.Gym)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (trainer == null) return NotFound();
+
+            return View(trainer);
+        }
+
+        // POST: Trainers/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var trainer = await _context.Trainers.FindAsync(id);
+            if (trainer != null)
+            {
+                _context.Trainers.Remove(trainer);
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool TrainerExists(int id)
+        {
+            return _context.Trainers.Any(e => e.Id == id);
         }
     }
 }
