@@ -7,6 +7,7 @@ namespace ProjeOdeviWeb_G231210048.Models
     public class Trainer
     {
         public int Id { get; set; }
+      
 
         [Required(ErrorMessage = "Antrenör adı zorunludur.")]
         [Display(Name = "Adı Soyadı")]
@@ -26,6 +27,7 @@ namespace ProjeOdeviWeb_G231210048.Models
         [Display(Name = "Bitiş Saati")]
         [DataType(DataType.Time)]
         public TimeSpan AvailableTo { get; set; }
+        public string? DaysOff { get; set; }
 
         // Eski Hali:
         // public int GymId { get; set; }
@@ -38,5 +40,6 @@ namespace ProjeOdeviWeb_G231210048.Models
         // Antrenörün verebildiği hizmetler
         // Eski hali: public virtual ICollection<Service> Services { get; set; }
         public virtual ICollection<Service>? Services { get; set; }
+        public virtual ICollection<Session>? Sessions { get; set; }
     }
 }
