@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace ProjeOdeviWeb_G231210048.Controllers
 {
-    [Authorize] // Giriş yapmayan giremesin
+    [Authorize] // Giriş yapmayan giremesin (Varsayılan kural)
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -19,44 +19,56 @@ namespace ProjeOdeviWeb_G231210048.Controllers
             _context = context;
         }
 
-        [AllowAnonymous] // Anasayfa herkese açık
+        // ==========================================================
+        // 1. ANA SAYFA & YÖNLENDİRME
+        // ==========================================================
+        [AllowAnonymous] // Herkese açık
         public IActionResult Index()
         {
             // --- TRAFİK KONTROLÜ ---
-
-            // 1. Eğer kullanıcı zaten GİRİŞ YAPMIŞSA, onu bekleme yapmadan paneline atalım.
             if (User.Identity.IsAuthenticated)
             {
                 if (User.IsInRole("Admin"))
-                {
-                    return RedirectToAction("Index", "Admin"); // Patron ofise
-                }
+                    return RedirectToAction("Index", "Admin");
                 else if (User.IsInRole("Antrenör"))
-                {
-                    return RedirectToAction("TrainerDashboard"); // Hoca sahaya
-                }
+                    return RedirectToAction("TrainerDashboard");
                 else if (User.IsInRole("Uye"))
-                {
-                    return RedirectToAction("MemberDashboard"); // Üye programa
-                }
+                    return RedirectToAction("MemberDashboard");
             }
 
-            // 2. Eğer kullanıcı MİSAFİR ise (Giriş yapmamışsa), Reklam Sayfasını göster.
+            // Misafirler için Reklam/Landing Page
             return View();
         }
 
-        // --- 1. ÜYE PANELİ ---
+        // ==========================================================
+        // 2. HİZMETLER / DERS PROGRAMI (YENİ EKLENDİ ✅)
+        // ==========================================================
+        [AllowAnonymous] // Üye olmayanlar da dersleri inceleyebilsin
+        public async Task<IActionResult> Services()
+        {
+            // Sadece Onaylı (IsApproved == true) ve Gelecek Tarihli dersleri getir
+            var activeSessions = await _context.Sessions
+                .Include(s => s.Trainer) // Hocanın adını görmek için
+                .Where(s => s.IsApproved == true && s.SessionDate > DateTime.Now)
+                .OrderBy(s => s.SessionDate) // Tarihe göre sırala
+                .ToListAsync();
+
+            return View(activeSessions);
+        }
+
+        // ==========================================================
+        // 3. ÜYE PANELİ (Hibrit: Randevular + Ders Önerileri)
+        // ==========================================================
         [Authorize(Roles = "Uye")]
         public async Task<IActionResult> MemberDashboard()
         {
-            // Giriş yapan kullanıcının ID'sini al
             var userIdClaim = User.FindFirst("UserId");
             if (userIdClaim == null) return RedirectToAction("Login", "Account");
 
             int userId = int.Parse(userIdClaim.Value);
             var user = await _context.AppUsers.FindAsync(userId);
 
-            // Randevuları Getir
+            // A) BİREYSEL RANDEVULAR
             var myAppointments = await _context.Appointments
                 .Include(a => a.Trainer)
                 .Include(a => a.Service)
@@ -64,11 +76,15 @@ namespace ProjeOdeviWeb_G231210048.Controllers
                 .OrderBy(a => a.Date).ThenBy(a => a.Time)
                 .ToListAsync();
 
-            // Antrenörleri ve Hizmetleri Getir
-            ViewBag.Trainers = await _context.Trainers.ToListAsync();
-            ViewBag.Services = await _context.Services.ToListAsync();
+            // B) GRUP SEANSLARI (Öneri olarak gösterilenler)
+            ViewBag.ActiveSessions = await _context.Sessions
+                .Include(s => s.Trainer)
+                .Where(s => s.IsApproved == true && s.SessionDate >= DateTime.Now)
+                .OrderBy(s => s.SessionDate)
+                .Take(3) // Sadece en yakın 3 dersi göster
+                .ToListAsync();
 
-            // AI Hesaplaması
+            // C) AI ANALİZİ (VKI Hesaplama)
             double vki = 0;
             string aiRecommendation = "Henüz boy/kilo bilgisi girilmemiş.";
 
@@ -90,22 +106,40 @@ namespace ProjeOdeviWeb_G231210048.Controllers
             return View(myAppointments);
         }
 
-        // --- 2. ANTRENÖR PANELİ ---
+        // ==========================================================
+        // 4. ANTRENÖR PANELİ (Hibrit: Bireysel + Grup)
+        // ==========================================================
         [Authorize(Roles = "Antrenör")]
         public async Task<IActionResult> TrainerDashboard()
         {
             var trainerName = User.Identity.Name;
 
-            var mySchedule = await _context.Appointments
+            // Önce Trainer tablosundaki ID'yi bulmamız lazım
+            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == trainerName);
+
+            if (trainer == null)
+            {
+                ViewBag.MySessions = new List<Session>();
+                return View(new List<Appointment>());
+            }
+
+            // A) BUGÜNKÜ BİREYSEL RANDEVULAR
+            var todaysAppointments = await _context.Appointments
                 .Include(a => a.AppUser)
                 .Include(a => a.Service)
-                .Include(a => a.Trainer)
-                // Antrenörün kendi adıyla eşleşen ve bugünün randevularını getir
-                .Where(a => a.Trainer.FullName == trainerName && a.Date == DateTime.Today)
+                .Where(a => a.TrainerId == trainer.Id && a.Date == DateTime.Today && a.Status == "Onaylandı")
                 .OrderBy(a => a.Time)
                 .ToListAsync();
 
-            return View(mySchedule);
+            // B) ANTRENÖRÜN OLUŞTURDUĞU GRUP SEANSLARI (Gelecek Tarihli)
+            var mySessions = await _context.Sessions
+                .Where(s => s.TrainerId == trainer.Id && s.SessionDate >= DateTime.Today)
+                .OrderBy(s => s.SessionDate)
+                .ToListAsync();
+
+            ViewBag.MySessions = mySessions;
+
+            return View(todaysAppointments);
         }
 
         [AllowAnonymous]
