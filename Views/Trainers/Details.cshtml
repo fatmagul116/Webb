@@ -1,0 +1,138 @@
+﻿@model ProjeOdeviWeb_G231210048.Models.Trainer
+
+@{
+    ViewData["Title"] = "Antrenör Detayı";
+}
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Listeye Dön
+        </a>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fa-solid fa-pen-to-square"></i> Düzenle
+            </a>
+        }
+    </div>
+
+    <div class="card shadow border-0 mb-5">
+        <div class="row g-0">
+            <div class="col-md-4 bg-dark text-white d-flex flex-column align-items-center justify-content-center p-4">
+                <div class="bg-white text-dark rounded-circle p-4 mb-3" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-user-ninja fa-4x"></i>
+                </div>
+                <h3 class="text-center">@Model.FullName</h3>
+                <span class="badge bg-primary mt-2">@Model.Specialization</span>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary border-bottom pb-2 mb-3">Genel Bilgiler</h5>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold text-muted">Çalışma Saatleri:</div>
+                        <div class="col-sm-8">
+                            <i class="fa-regular fa-clock text-warning"></i>
+                            @Model.AvailableFrom.ToString(@"hh\:mm") - @Model.AvailableTo.ToString(@"hh\:mm")
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold text-muted">İzin Günleri:</div>
+                        <div class="col-sm-8 text-danger">
+                            <i class="fa-solid fa-calendar-xmark"></i>
+                            @(string.IsNullOrEmpty(Model.DaysOff) ? "Yok" : Model.DaysOff)
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold text-muted">Spor Salonu:</div>
+                        <div class="col-sm-8">
+                            <i class="fa-solid fa-location-dot text-success"></i>
+                            @Model.Gym?.Address
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="/Appointments/Create?trainerId=@Model.Id" class="btn btn-outline-primary w-100">
+                            <i class="fa-regular fa-calendar-plus"></i> Bireysel Randevu Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="text-primary mb-4"><i class="fa-solid fa-users-rectangle"></i> Antrenörün Grup Dersleri</h3>
+
+    @if (Model.Sessions != null && Model.Sessions.Any(s => s.IsApproved == true && s.SessionDate > DateTime.Now))
+    {
+        <div class="row">
+            @foreach (var session in Model.Sessions.Where(s => s.IsApproved == true && s.SessionDate > DateTime.Now).OrderBy(s => s.SessionDate))
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-primary shadow-sm hover-effect">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h5 class="m-0">@session.ClassName</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-center my-3">
+                                <i class="fa-regular fa-calendar-check fa-2x text-warning mb-2 d-block"></i>
+                                <strong>@session.SessionDate.ToString("dd MMMM yyyy")</strong> <br />
+                                <span class="text-muted">@session.SessionDate.ToString("HH:mm")</span>
+                            </p>
+
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fa-solid fa-hourglass-half text-secondary"></i> Süre:</span>
+                                    <strong>@session.Duration dk</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fa-solid fa-tag text-success"></i> Ücret:</span>
+                                    <strong>@session.Price ₺</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fa-solid fa-users text-info"></i> Kontenjan:</span>
+                                    <strong>@session.CurrentCount / @session.Quota</strong>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            @if (session.CurrentCount >= session.Quota)
+                            {
+                                <button class="btn btn-secondary w-100" disabled>Kontenjan Dolu</button>
+                            }
+                            else
+                            {
+                                <a href="/Home/Services" class="btn btn-primary w-100">Dersi İncele & Katıl</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-light border text-center py-4">
+            <i class="fa-solid fa-calendar-xmark fa-2x text-muted mb-2"></i>
+            <p class="text-muted mb-0">Bu antrenörün şu an aktif veya planlanmış bir grup dersi bulunmamaktadır.</p>
+            <small>Yukarıdaki butondan bireysel randevu oluşturabilirsiniz.</small>
+        </div>
+    }
+
+</div>
+
+<style>
+    .hover-effect {
+        transition: transform 0.2s;
+    }
+
+        .hover-effect:hover {
+            transform: translateY(-5px);
+        }
+</style>

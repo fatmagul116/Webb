@@ -1,0 +1,101 @@
+﻿@model ProjeOdeviWeb_G231210048.Models.ViewModels.AiRequestViewModel
+
+@{
+    ViewData["Title"] = "AI Antrenör";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-gradient bg-primary text-white">
+                    <h4 class="mb-0"><i class="fa-solid fa-robot"></i> AI Destekli Program</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Bilgilerinizi girin, yapay zeka size özel beslenme ve antrenman programı hazırlasın.</p>
+
+                    <form asp-action="Index" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <label class="form-label">Yaş</label>
+                                <input asp-for="Age" class="form-control" placeholder="22" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Cinsiyet</label>
+                                <select asp-for="Gender" class="form-select">
+                                    <option value="Kadın">Kadın</option>
+                                    <option value="Erkek">Erkek</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <label class="form-label">Boy (cm)</label>
+                                <input asp-for="Height" class="form-control" placeholder="175" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Kilo (kg)</label>
+                                <input asp-for="Weight" class="form-control" placeholder="70" />
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Aktivite Düzeyi</label>
+                            <select asp-for="ActivityLevel" class="form-select">
+                                <option value="Hareketsiz">Hareketsiz (Masa başı)</option>
+                                <option value="Az Hareketli">Az Hareketli (Haftada 1-2 gün spor)</option>
+                                <option value="Aktif">Aktif (Haftada 3-4 gün spor)</option>
+                                <option value="Çok Aktif">Sporcu (Her gün antrenman)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Hedefiniz</label>
+                            <select asp-for="Goal" class="form-select">
+                                <option value="Kilo Vermek">Kilo Vermek (Yağ Yakımı)</option>
+                                <option value="Kas Yapmak">Kas Kütlesi Artırmak</option>
+                                <option value="Formu Korumak">Formu Korumak / Sıkılaşmak</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning text-dark fw-bold">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Program Oluştur
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            @if (!string.IsNullOrEmpty(Model.AiResponse))
+            {
+                <div class="card shadow border-0">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="fa-solid fa-file-medical"></i> Size Özel Plan Hazırlandı!</h4>
+                    </div>
+                    <div class="card-body bg-light">
+                        <div class="ai-content">
+                            @Html.Raw(Model.AiResponse)
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted text-center small">
+                        * Bu program yapay zeka tarafından öneri amaçlı oluşturulmuştur. Uygulamadan önce uzmana danışınız.
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info text-center mt-5">
+                    <i class="fa-solid fa-dumbbell fa-4x mb-3 text-info"></i>
+                    <h4>Henüz bir program oluşturmadınız.</h4>
+                    <p>Sol taraftaki formu doldurup "Program Oluştur" butonuna basınız.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

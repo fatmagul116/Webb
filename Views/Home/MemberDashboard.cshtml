@@ -1,0 +1,229 @@
+﻿@model IEnumerable<ProjeOdeviWeb_G231210048.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Üye Paneli";
+
+    // Controller'dan gelen ek verileri alıyoruz
+    var user = ViewBag.User as ProjeOdeviWeb_G231210048.Models.AppUser;
+    var activeSessions = ViewBag.ActiveSessions as List<ProjeOdeviWeb_G231210048.Models.Session>;
+
+    // AI Verileri
+    string aiMessage = ViewBag.AiMessage ?? "Vücut analizi için profilinizi güncelleyin.";
+
+    // Rastgele motivasyon sözü
+    string[] quotes = { "Asla pes etme!", "Ter, yağların ağlamasıdır.", "Bugün yarınki senin için çalış.", "Acı geçici, gurur kalıcıdır.", "Bahane üretme, kas üret." };
+    string randomQuote = quotes[new Random().Next(quotes.Length)];
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark">👋 Hoşgeldin, @(user?.FullName ?? User.Identity.Name)!</h2>
+            <p class="text-muted mb-0">Bugün spor yapmak için harika bir gün.</p>
+        </div>
+        <div class="text-end d-none d-md-block">
+            <h5 class="fw-bold m-0 text-primary">@DateTime.Now.ToString("dd MMMM dddd")</h5>
+            <small class="text-muted">Sakarya, TR</small>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm text-white h-100" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 display-4 text-white-50">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold"><i class="fa-solid fa-wand-magic-sparkles text-warning"></i> AI Antrenörün Diyor ki:</h5>
+                        <p class="mb-0 small fst-italic">"@aiMessage"</p>
+                        <a asp-controller="AI" asp-action="Index" class="btn btn-sm btn-light text-primary fw-bold mt-2 rounded-pill">
+                            Detaylı Analiz Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-dark text-white h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <i class="fa-solid fa-fire text-danger fs-1 mb-2"></i>
+                    <h6 class="text-uppercase text-white-50 small">Günün Sözü</h6>
+                    <p class="fw-bold fst-italic">"@randomQuote"</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-5 border-success">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted text-uppercase small">Aktif Randevular</h6>
+                        <h2 class="fw-bold text-dark mb-0">@(Model?.Count() ?? 0)</h2>
+                    </div>
+                    <div class="bg-light p-3 rounded-circle text-success">
+                        <i class="fa-solid fa-calendar-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold"><i class="fa-regular fa-calendar-days text-primary"></i> Randevularım</h4>
+                @if (Model != null && Model.Count() > 3)
+                {
+                    <a asp-controller="Appointments" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill">Tümünü Gör</a>
+                }
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="row">
+                    @foreach (var item in Model) // Controller'da zaten filtreli ve sıralı geliyor
+                    {
+                        <div class="col-12 mb-3">
+                            <div class="card shadow-sm border-0 hover-card">
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="bg-light rounded p-3 text-center me-3 border" style="min-width: 80px;">
+                                        <h5 class="fw-bold text-danger m-0">@item.Date.Day</h5>
+                                        <small class="text-muted text-uppercase fw-bold">@item.Date.ToString("MMM")</small>
+                                    </div>
+
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between">
+                                            <h5 class="fw-bold mb-1">@item.Service?.Name</h5>
+
+                                            @if (item.Status == "Onaylandı")
+                                            {
+                                                <span class="badge bg-success rounded-pill align-self-start">Onaylandı</span>
+                                            }
+                                            else if (item.Status == "Reddedildi")
+                                            {
+                                                <span class="badge bg-danger rounded-pill align-self-start">Reddedildi</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-pill align-self-start">Onay Bekliyor</span>
+                                            }
+                                        </div>
+
+                                        <div class="text-muted small mb-1">
+                                            <span class="me-3"><i class="fa-regular fa-clock text-primary"></i> @item.Time.ToString(@"hh\:mm")</span>
+                                            <span><i class="fa-solid fa-user-tie text-primary"></i> @item.Trainer?.FullName</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 bg-white rounded shadow-sm border border-dashed mb-4">
+                    <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" alt="No Data" style="width: 60px; opacity: 0.5;">
+                    <h5 class="mt-3 text-muted">Henüz planlanmış randevun yok.</h5>
+                    <p class="small text-muted">Hedeflerine ulaşmak için ilk adımı at!</p>
+                    <a asp-controller="Trainers" asp-action="Index" class="btn btn-primary px-4 rounded-pill">
+                        <i class="fa-solid fa-plus"></i> Antrenör Seç & Randevu Al
+                    </a>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4 mt-4 mt-lg-0">
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white fw-bold py-3 border-bottom">
+                    <i class="fa-solid fa-bolt text-warning"></i> Hızlı İşlemler
+                </div>
+                <div class="list-group list-group-flush">
+                    <a asp-controller="Trainers" asp-action="Index" class="list-group-item list-group-item-action py-3 d-flex align-items-center">
+                        <div class="bg-primary text-white rounded p-2 me-3"><i class="fa-solid fa-user-plus"></i></div>
+                        <div>
+                            <h6 class="m-0 fw-bold">Özel Ders Al</h6>
+                            <small class="text-muted">Antrenör listesine git</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                    <a asp-controller="Home" asp-action="Services" class="list-group-item list-group-item-action py-3 d-flex align-items-center">
+                        <div class="bg-success text-white rounded p-2 me-3"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <h6 class="m-0 fw-bold">Grup Dersleri</h6>
+                            <small class="text-muted">Seansları incele</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                    <a asp-controller="AI" asp-action="Index" class="list-group-item list-group-item-action py-3 d-flex align-items-center">
+                        <div class="bg-info text-white rounded p-2 me-3"><i class="fa-solid fa-brain"></i></div>
+                        <div>
+                            <h6 class="m-0 fw-bold">AI Asistan</h6>
+                            <small class="text-muted">Yapay zeka programı</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right ms-auto text-muted"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold py-3 text-success border-bottom">
+                    <i class="fa-solid fa-star"></i> Önerilen Grup Dersleri
+                </div>
+                <div class="card-body p-0">
+                    @if (activeSessions != null && activeSessions.Any())
+                    {
+                        @foreach (var session in activeSessions)
+                        {
+                            <div class="p-3 border-bottom position-relative hover-bg-light">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="badge bg-success bg-opacity-10 text-success">@session.ClassName</span>
+                                    <span class="small fw-bold text-muted">@session.Price ₺</span>
+                                </div>
+                                <h6 class="fw-bold mb-1">@session.Trainer?.FullName</h6>
+                                <div class="d-flex text-muted small">
+                                    <span class="me-3"><i class="fa-regular fa-calendar"></i> @session.SessionDate.ToString("dd MMM")</span>
+                                    <span><i class="fa-regular fa-clock"></i> @session.SessionDate.ToString("HH:mm")</span>
+                                </div>
+                                <a href="/Home/Services" class="stretched-link"></a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <small>Şu an önerilen aktif grup dersi bulunmuyor.</small>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer bg-white text-center border-0 p-2">
+                    <a href="/Home/Services" class="btn btn-sm btn-link text-decoration-none">Tüm Programı Gör</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .hover-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        }
+
+    .border-dashed {
+        border-style: dashed !important;
+        border-width: 2px !important;
+    }
+
+    .hover-bg-light:hover {
+        background-color: #f8f9fa;
+    }
+</style>

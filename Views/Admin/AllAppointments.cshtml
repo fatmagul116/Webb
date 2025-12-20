@@ -1,0 +1,89 @@
+﻿@model IEnumerable<ProjeOdeviWeb_G231210048.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Tüm Bireysel Randevular";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="fw-bold"><i class="fa-regular fa-calendar-check text-primary"></i> Tüm Bireysel Randevular</h2>
+            <p class="text-muted">Sistemdeki geçmiş ve gelecek tüm bireysel ders talepleri.</p>
+        </div>
+        <div class="bg-light p-2 rounded border">
+            <span class="fw-bold text-dark">Toplam Kayıt:</span> @Model.Count()
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle m-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Saat</th>
+                            <th>Üye (Öğrenci)</th>
+                            <th>Antrenör</th>
+                            <th>Ders</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <i class="fa-regular fa-calendar me-1 text-muted"></i>
+                                    @item.Date.ToString("dd.MM.yyyy")
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        @item.Time.ToString(@"hh\:mm")
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width:30px; height:30px;">
+                                            <i class="fa-solid fa-user small"></i>
+                                        </div>
+                                        @item.AppUser?.FullName
+                                    </div>
+                                </td>
+
+                                <td>@item.Trainer?.FullName</td>
+
+                                <td>@item.Service?.Name</td>
+
+                                <td>
+                                    @if (item.Status == "Onaylandı")
+                                    {
+                                        <span class="badge bg-success"><i class="fa-solid fa-check"></i> Onaylandı</span>
+                                    }
+                                    else if (item.Status == "Reddedildi")
+                                    {
+                                        <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Reddedildi</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-hourglass"></i> Bekliyor</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center p-5 text-muted">
+                    <i class="fa-regular fa-folder-open fa-3x mb-3"></i>
+                    <p>Sistemde henüz hiç randevu kaydı bulunmuyor.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

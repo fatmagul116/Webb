@@ -1,0 +1,212 @@
+﻿@model ProjeOdeviWeb_G231210048.Models.Appointment
+
+@{
+    ViewData["Title"] = "Yeni Randevu";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fa-solid fa-calendar-plus"></i> Yeni Randevu Oluştur</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Hizmet Seçiniz</label>
+                                <select asp-for="ServiceId" class="form-select" asp-items="ViewBag.ServiceId" id="serviceSelect">
+                                    <option value="">-- Hizmet Seç --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Eğitmen Seçiniz</label>
+                                <select asp-for="TrainerId" class="form-select" asp-items="ViewBag.TrainerId" id="trainerSelect">
+                                    <option value="">-- Eğitmen Seç --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Seans Süresi</label>
+                                <select asp-for="Duration" class="form-select" id="durationSelect">
+                                    <option value="60">60 Dakika (Standart)</option>
+                                    <option value="30">30 Dakika (%40 İndirimli)</option>
+                                    <option value="90">90 Dakika (Ekstra Uzun)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Date" class="form-label fw-bold">Tarih</label>
+                                <input asp-for="Date" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                <span asp-validation-for="Date" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Time" class="form-label fw-bold">Uygun Saat Aralığı</label>
+                            <select asp-for="Time" class="form-select" id="timeSelect" disabled>
+                                <option>Önce Eğitmen Seçiniz...</option>
+                            </select>
+                            <div class="form-text text-muted" id="workingHoursInfo"></div>
+                        </div>
+
+                        <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-tag"></i> Tahmini Tutar:</span>
+                            <span class="fs-4 fw-bold text-dark" id="priceDisplay">0.00 TL</span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Randevuyu Kaydet</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Listeye Geri Dön</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Değişkenler
+            let basePrice = 0;
+            let trainerStart = "09:00";
+            let trainerEnd = "17:00";
+
+            // --- BAŞLANGIÇ KONTROLÜ ---
+            // Eğer sayfaya "Randevu Al" butonuyla gelindiyse (URL'de serviceId varsa)
+            // veya Controller'dan zaten seçili geldiyse fiyatı hemen hesapla.
+            var initialServiceId = $('#serviceSelect').val();
+            if (initialServiceId) {
+                 $.get('/Appointments/GetServicePrice', { serviceId: initialServiceId }, function (data) {
+                    basePrice = data.price;
+                    calculatePrice();
+                });
+            }
+            // --------------------------
+
+            // 1. Hizmet Değişince: Hem Fiyatı Çek Hem Eğitmenleri Filtrele
+            $('#serviceSelect').change(function () {
+                var serviceId = $(this).val();
+
+                if (serviceId) {
+                    // A) Fiyatı Güncelle
+                    $.get('/Appointments/GetServicePrice', { serviceId: serviceId }, function (data) {
+                        basePrice = data.price;
+                        calculatePrice();
+                    });
+
+                    // B) Eğitmenleri Filtrele (YENİ EKLENEN KISIM)
+                    $.get('/Appointments/GetTrainersByService', { serviceId: serviceId }, function (trainers) {
+                        var trainerSelect = $('#trainerSelect');
+                        trainerSelect.empty(); // Listeyi temizle
+                        trainerSelect.append('<option value="">-- Eğitmen Seç --</option>'); // Başlık ekle
+
+                        if (trainers.length > 0) {
+                            $.each(trainers, function (i, trainer) {
+                                trainerSelect.append($('<option></option>').val(trainer.id).html(trainer.fullName));
+                            });
+                        } else {
+                            trainerSelect.append('<option value="">Bu hizmet için uygun eğitmen bulunamadı</option>');
+                        }
+
+                        // Eğitmen listesi değiştiği için saatleri ve bilgileri sıfırla
+                        $('#timeSelect').prop('disabled', true).html('<option>Önce Eğitmen Seçiniz...</option>');
+                        $('#workingHoursInfo').text('');
+                    });
+                }
+                else {
+                    // Hizmet seçimi kaldırılırsa her şeyi sıfırla
+                    $('#trainerSelect').empty().append('<option value="">-- Önce Hizmet Seç --</option>');
+                    $('#priceDisplay').text("0.00 TL");
+                }
+            });
+
+            // 2. Antrenör Değişince Saatleri Çek
+            $('#trainerSelect').change(function () {
+                var trainerId = $(this).val();
+                if (trainerId) {
+                    $.get('/Appointments/GetTrainerHours', { trainerId: trainerId }, function (data) {
+                        trainerStart = data.start;
+                        trainerEnd = data.end;
+
+                        $('#workingHoursInfo').text(`Bu eğitmen ${trainerStart} - ${trainerEnd} saatleri arasında çalışmaktadır.`);
+                        $('#timeSelect').prop('disabled', false);
+
+                        generateTimeSlots(); // Saatleri yeniden oluştur
+                    });
+                } else {
+                    $('#timeSelect').prop('disabled', true);
+                    $('#timeSelect').html('<option>Önce Eğitmen Seçiniz...</option>');
+                    $('#workingHoursInfo').text('');
+                }
+            });
+
+            // 3. Süre Değişince Fiyatı ve Saatleri Güncelle
+            $('#durationSelect').change(function () {
+                calculatePrice();
+                generateTimeSlots(); // Süre değişince sığmayan saatler silinmeli
+            });
+
+            // FİYAT HESAPLAMA FONKSİYONU
+            function calculatePrice() {
+                let duration = parseInt($('#durationSelect').val());
+                let finalPrice = 0;
+
+                if (duration === 30) finalPrice = basePrice * 0.60;
+                else if (duration === 60) finalPrice = basePrice;
+                else if (duration === 90) finalPrice = basePrice * 1.50;
+
+                $('#priceDisplay').text(finalPrice.toFixed(2) + " TL");
+            }
+
+            // SAAT DİLİMLERİNİ OLUŞTURMA FONKSİYONU
+            function generateTimeSlots() {
+                let duration = parseInt($('#durationSelect').val());
+                let select = $('#timeSelect');
+                select.empty();
+
+                // Saatleri "09:00" formatından dakikaya çevir
+                let startParts = trainerStart.split(':');
+                let endParts = trainerEnd.split(':');
+
+                let startMin = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+                let endMin = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+
+                // Döngü ile saatleri oluştur (30 dakikalık aralıklarla)
+                for (let time = startMin; time < endMin; time += 30) {
+
+                    // Eğer (Başlangıç + Seçilen Süre) > Bitiş Saati ise bu saati ekleme!
+                    if (time + duration > endMin) {
+                        continue;
+                    }
+
+                    // Dakikayı tekrar "HH:mm" formatına çevir
+                    let h = Math.floor(time / 60);
+                    let m = time % 60;
+                    let timeString = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+
+                    select.append(`<option value="${timeString}">${timeString} (Bitiş: ${addMinutes(timeString, duration)})</option>`);
+                }
+            }
+
+            // Yardımcı: Saate dakika ekleyip string döndürür
+            function addMinutes(timeStr, minsToAdd) {
+                let parts = timeStr.split(':');
+                let totalMin = parseInt(parts[0]) * 60 + parseInt(parts[1]) + minsToAdd;
+                let h = Math.floor(totalMin / 60);
+                let m = totalMin % 60;
+                return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+            }
+        });
+    </script>
+}

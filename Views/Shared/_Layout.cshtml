@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Spor Salonu</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-dumbbell text-warning"></i> Spor Salonu
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+
+                    <ul class="navbar-nav flex-grow-1">
+
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Home" asp-action="Index">Anasayfa</a>
+                        </li>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            // --- ADMİN MENÜLERİ ---
+                            <li class="nav-item">
+                                <a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">
+                                    <i class="fa-solid fa-bell"></i> Onay Bekleyenler
+                                </a>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-white" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-gear"></i> Sistem Yönetimi
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Trainers" asp-action="Index">
+                                            <i class="fa-solid fa-user-tie text-primary me-2"></i> Eğitmen Listesi & Düzenle
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Services" asp-action="Index">
+                                            <i class="fa-solid fa-dumbbell text-success me-2"></i> Hizmetleri Yönet
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="AllSessions">
+                                            <i class="fa-solid fa-users-rectangle text-info me-2"></i> Tüm Grup Seansları
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="AllAppointments">
+                                            <i class="fa-regular fa-calendar-check text-warning me-2"></i> Tüm Bireysel Randevular
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else if (User.IsInRole("Antrenör"))
+                        {
+                            // --- ANTRENÖR MENÜLERİ ---
+
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-controller="Trainer" asp-action="CreateSession">
+                                    <i class="fa-solid fa-plus-circle text-success"></i> Yeni Ders
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            // --- ÜYE VE MİSAFİR MENÜLERİ ---
+                           
+
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Services" asp-action="Index">Hizmetler</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Trainers" asp-action="Index">Eğitmenler</a>
+                            </li>
+
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-info" asp-controller="Ai" asp-action="Index">
+                                        <i class="fa-solid fa-robot"></i> AI Antrenör
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item d-flex align-items-center">
+                                <span class="text-white me-3 small">
+                                    <i class="fa-solid fa-user-circle"></i> @User.Identity.Name
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-outline-danger btn-sm" asp-controller="Account" asp-action="Logout">
+                                    <i class="fa-solid fa-right-from-bracket"></i> Çıkış
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" asp-controller="Account" asp-action="Login">
+                                    <i class="fa-solid fa-right-to-bracket"></i> Giriş Yap
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Register">
+                                    <i class="fa-solid fa-user-plus"></i> Kayıt Ol
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted mt-5">
+        <div class="container text-center pt-3">
+            &copy; 2025 - Spor Salonu Randevu Sistemi - <a asp-area="" asp-controller="Home" asp-action="Privacy">Gizlilik Politikası</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

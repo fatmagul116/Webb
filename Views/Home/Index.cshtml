@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "Anasayfa";
+}
+
+<div class="p-5 mb-4 bg-dark text-white rounded-3 shadow" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'); background-size: cover; background-position: center;">
+    <div class="container-fluid py-5 text-center">
+        <h1 class="display-3 fw-bold text-warning">SINIRLARINI ZORLA!</h1>
+        <p class="col-md-8 fs-4 mx-auto">Hayalindeki vücuda kavuşmak için yarını bekleme. Profesyonel eğitmenler, son teknoloji ekipmanlar ve sana özel programlar burada.</p>
+        <div class="mt-4">
+            <a class="btn btn-warning btn-lg fw-bold px-5 me-2" asp-controller="Account" asp-action="Register">HEMEN ÜYE OL</a>
+            <a class="btn btn-outline-light btn-lg fw-bold px-5" asp-controller="Account" asp-action="Login">GİRİŞ YAP</a>
+        </div>
+    </div>
+</div>
+
+<div class="container marketing mt-5">
+    <div class="row text-center">
+        <div class="col-lg-4">
+            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px;">
+                <i class="fa-solid fa-dumbbell fa-3x text-dark"></i>
+            </div>
+            <h2 class="fw-normal">Modern Ekipman</h2>
+            <p>En yeni teknoloji fitness aletleri ile antrenman kaliteni maksimuma çıkar. Beklemek yok, çalışmak var!</p>
+        </div>
+        <div class="col-lg-4">
+            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px;">
+                <i class="fa-solid fa-users fa-3x text-dark"></i>
+            </div>
+            <h2 class="fw-normal">Uzman Eğitmenler</h2>
+            <p>Alanında sertifikalı, deneyimli antrenörlerimizle hedeflerine en hızlı ve sağlıklı yoldan ulaş.</p>
+        </div>
+        <div class="col-lg-4">
+            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px;">
+                <i class="fa-solid fa-robot fa-3x text-dark"></i>
+            </div>
+            <h2 class="fw-normal">Yapay Zeka Desteği</h2>
+            <p>Sistemimiz vücut analizi yaparak sana en uygun dersleri otomatik önerir. Akıllı sporun adresi.</p>
+        </div>
+    </div>
+
+    <hr class="featurette-divider my-5">
+
+    <div class="row featurette align-items-center">
+        <div class="col-md-7">
+            <h2 class="featurette-heading">Bahaneleri Kapıda Bırak. <span class="text-muted">Değişim Şimdi Başlıyor.</span></h2>
+            <p class="lead">Spor sadece fiziksel bir aktivite değil, bir yaşam tarzıdır. Bizimle bu yolculuğa çıkmaya hazır mısın? Grupl dersleri, özel dersler ve daha fazlası.</p>
+            <p><a class="btn btn-outline-dark" asp-controller="Services" asp-action="Index">Hizmetlerimizi İncele &raquo;</a></p>
+        </div>
+        <div class="col-md-5">
+            <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" class="img-fluid rounded shadow" alt="Spor Salonu">
+        </div>
+    </div>
+</div>

@@ -1,0 +1,80 @@
+﻿@model IEnumerable<ProjeOdeviWeb_G231210048.Models.Trainer>
+
+@{
+    ViewData["Title"] = "Eğitmen Kadromuz";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-6 fw-bold"><i class="fa-solid fa-users"></i> Eğitmen Kadromuz</h1>
+
+   
+    </div>
+
+    <div class="row">
+        @if (Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm border-0 hover-effect">
+                        <div class="card-img-top bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
+                            <div class="rounded-circle bg-warning text-dark d-flex justify-content-center align-items-center fw-bold"
+                                 style="width: 100px; height: 100px; font-size: 2.5rem;">
+                                @item.FullName.Substring(0, 1)
+                            </div>
+                        </div>
+
+                        <div class="card-body text-center">
+                            <h4 class="card-title fw-bold mb-1">@item.FullName</h4>
+                            <span class="badge bg-primary mb-3">@item.Specialization Uzmanı</span>
+
+                            <hr />
+
+                            <div class="text-muted small mb-2">
+                                <i class="fa-regular fa-clock text-warning"></i> Çalışma Saatleri
+                            </div>
+
+                            <p class="fw-bold fs-5 text-dark">
+                                @item.AvailableFrom.ToString(@"hh\:mm") - @item.AvailableTo.ToString(@"hh\:mm")
+                            </p>
+                            <p class="small text-muted">
+                                Birebir ve grup dersleri için uygundur.
+                            </p>
+                        </div>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <div class="card-footer bg-white border-top-0 text-center pb-3">
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">Detay</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Sil</a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    Henüz sistemde kayıtlı eğitmen bulunmamaktadır.
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .hover-effect {
+        transition: transform 0.3s;
+    }
+
+        .hover-effect:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+</style>

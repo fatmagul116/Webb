@@ -1,0 +1,97 @@
+﻿@model ProjeOdeviWeb_G231210048.Models.Session
+
+@{
+    ViewData["Title"] = "Yeni Grup Dersi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="fa-solid fa-calendar-plus"></i> Yeni Grup Dersi Oluştur</h3>
+                </div>
+
+                <div class="card-body p-4">
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger shadow-sm">
+                            <i class="fa-solid fa-circle-exclamation me-2"></i> @TempData["Error"]
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-warning shadow-sm">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i> Lütfen aşağıdaki hataları düzeltiniz.
+                            <div asp-validation-summary="All" class="text-danger small mt-2"></div>
+                        </div>
+                    }
+
+                    <form asp-action="CreateSession" method="post">
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Ders / Hizmet Türü</label>
+
+                            <select asp-for="ClassName" class="form-select form-select-lg border-success" asp-items="ViewBag.AllowedServices" required>
+                                <option value="">-- Lütfen Uzmanlık Alanınızdan Bir Ders Seçin --</option>
+                            </select>
+
+                            <span asp-validation-for="ClassName" class="text-danger small"></span>
+                            <small class="text-muted fst-italic">
+                                <i class="fa-solid fa-info-circle"></i> Sadece profilinizde tanımlı uzmanlık alanlarına ait dersleri seçebilirsiniz.
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SessionDate" class="form-label fw-bold">Tarih ve Saat</label>
+                                <input asp-for="SessionDate" class="form-control" type="datetime-local" required
+                                       min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                                <span asp-validation-for="SessionDate" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Duration" class="form-label fw-bold">Süre (Dakika)</label>
+                                <input asp-for="Duration" class="form-control" type="number" min="15" value="60" required />
+                                <span asp-validation-for="Duration" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Price" class="form-label fw-bold">Ücret (₺)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold">₺</span>
+                                    <input asp-for="Price" class="form-control" type="number" min="0" step="0.01" required />
+                                </div>
+                                <span asp-validation-for="Price" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Quota" class="form-label fw-bold">Kontenjan (Kişi)</label>
+                                <input asp-for="Quota" class="form-control" type="number" min="1" value="10" required />
+                                <span asp-validation-for="Quota" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light border border-secondary text-muted small mt-2">
+                            <i class="fa-solid fa-shield-halved text-success"></i>
+                            Oluşturduğunuz ders, <strong>Yönetici Onayı</strong> alındıktan sonra vitrinde yayınlanacaktır.
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                                <i class="fa-solid fa-check-circle"></i> Dersi Oluştur ve Onaya Gönder
+                            </button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fa-solid fa-arrow-left"></i> İptal / Geri Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

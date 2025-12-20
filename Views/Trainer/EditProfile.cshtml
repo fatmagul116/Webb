@@ -1,0 +1,64 @@
+﻿@model ProjeOdeviWeb_G231210048.Models.Trainer
+
+@{
+    ViewData["Title"] = "Profili Güncelle";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0"><i class="fa-solid fa-user-pen"></i> Eğitmen Profilini Düzenle</h3>
+                </div>
+                <div class="card-body p-4">
+
+                    <form asp-action="EditProfile" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">AD SOYAD (Değiştirilemez)</label>
+                            <input asp-for="FullName" class="form-control bg-light" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Uzmanlık Alanı</label>
+                            <input asp-for="Specialization" class="form-control" placeholder="Örn: Fitness, Pilates, Kick Boks..." required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Mesai Başlangıç</label>
+                                <input asp-for="AvailableFrom" class="form-control" type="time" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Mesai Bitiş</label>
+                                <input asp-for="AvailableTo" class="form-control" type="time" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">İzinli Günler</label>
+                            <input asp-for="DaysOff" class="form-control" placeholder="Örn: Cumartesi, Pazar" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Bağlı Olduğunuz Salon</label>
+                            <select asp-for="GymId" class="form-select" asp-items="ViewBag.GymList"></select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark">
+                                <i class="fa-solid fa-save"></i> Değişiklikleri Kaydet
+                            </button>
+                            <a href="/Home/TrainerDashboard" class="btn btn-outline-secondary">
+                                <i class="fa-solid fa-xmark"></i> İptal
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

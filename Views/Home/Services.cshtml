@@ -1,0 +1,94 @@
+﻿@model List<ProjeOdeviWeb_G231210048.Models.Session>
+
+@{
+    ViewData["Title"] = "Grup Dersleri";
+}
+
+<div class="bg-primary text-white text-center py-5 mb-4 rounded-3 shadow-sm">
+    <h1 class="display-4 fw-bold"><i class="fa-solid fa-people-group"></i> Grup Dersleri</h1>
+    <p class="lead">Alanında uzman antrenörlerimizle toplu derslere katılın, motivasyonu yakalayın!</p>
+</div>
+
+<div class="container">
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-warning text-center p-5">
+            <i class="fa-regular fa-calendar-xmark fa-3x mb-3"></i>
+            <h4>Şu an aktif bir ders programı bulunmamaktadır.</h4>
+            <p>Lütfen daha sonra tekrar kontrol ediniz veya antrenörlerimizden bireysel randevu alınız.</p>
+            <a href="/Home/Trainers" class="btn btn-outline-dark mt-2">Antrenörleri İncele</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow border-0 hover-effect">
+                        <div class="card-header bg-dark text-white text-center py-3">
+                            <h4 class="m-0">@item.ClassName</h4>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-light rounded-circle p-2 me-2">
+                                    <i class="fa-solid fa-dumbbell text-primary fa-lg"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Eğitmen</small>
+                                    <span class="fw-bold">@item.Trainer.FullName</span>
+                                </div>
+                            </div>
+
+                            <hr class="my-2" />
+
+                            <p class="card-text mt-3">
+                                <i class="fa-regular fa-calendar-check text-warning me-2"></i>
+                                <strong>@item.SessionDate.ToString("dd MMMM yyyy")</strong>
+                            </p>
+                            <p class="card-text">
+                                <i class="fa-regular fa-clock text-warning me-2"></i>
+                                @item.SessionDate.ToString("HH:mm")
+                                <span class="text-muted">(@item.Duration dk)</span>
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3 bg-light p-2 rounded">
+                                <span class="text-success fw-bold fs-5">@item.Price ₺</span>
+                                <span class="badge bg-secondary">
+                                    <i class="fa-solid fa-user-group"></i> @item.CurrentCount / @item.Quota
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white border-0 pb-3">
+                            @if (item.CurrentCount >= item.Quota)
+                            {
+                                <button class="btn btn-secondary w-100" disabled>
+                                    <i class="fa-solid fa-lock"></i> Kontenjan Dolu
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary w-100 fw-bold">
+                                    <i class="fa-solid fa-ticket"></i> Hemen Katıl
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .hover-effect {
+        transition: transform 0.2s;
+    }
+
+        .hover-effect:hover {
+            transform: translateY(-5px);
+        }
+</style>

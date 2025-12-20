@@ -1,0 +1,60 @@
+﻿@model IEnumerable<ProjeOdeviWeb_G231210048.Models.Session>
+
+@{
+    ViewData["Title"] = "Tüm Seanslar";
+}
+
+<div class="container mt-4">
+    <h2><i class="fa-solid fa-list"></i> Tüm Grup Seansları</h2>
+    <p class="text-muted">Sistemdeki geçmiş ve gelecek tüm derslerin listesidir.</p>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover m-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Ders</th>
+                        <th>Eğitmen</th>
+                        <th>Durum</th>
+                        <th>Kontenjan</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.SessionDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@item.ClassName</td>
+                            <td>@item.Trainer?.FullName</td>
+                            <td>
+                                @if (item.IsApproved == true)
+                                {
+                                    <span class="badge bg-success">Onaylı</span>
+                                }
+                                else if (item.IsApproved == false)
+                                {
+
+                                    <span class="badge bg-danger">Red</span>
+                                }
+                                else
+                                {
+
+                                    <span class="badge bg-warning text-dark">Bekliyor</span>
+                                }
+                            </td>
+                            <td>@item.CurrentCount / @item.Quota</td>
+                            <td>
+                                <form asp-controller="Admin" asp-action="DeleteSession" method="post" onsubmit="return confirm('Bu seansı silmek istediğinize emin misiniz?');">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
