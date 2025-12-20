@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjeOdeviWeb_G231210048.Data;
-using ProjeOdeviWeb_G231210048.Models.ViewModels; // ViewModel için bu satır şart!
+using ProjeOdeviWeb_G231210048.Models.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,15 +18,17 @@ namespace ProjeOdeviWeb_G231210048.Controllers
             _context = context;
         }
 
-        // --- DASHBOARD (ANA SAYFA) ---
+        // ============================================================
+        // 1. DASHBOARD (ANA SAYFA - ONAY BEKLEYENLER)
+        // ============================================================
         public async Task<IActionResult> Index()
         {
-            // 1. Onay bekleyen Antrenör Kullanıcıları
+            // A) Onay bekleyen Antrenör Kullanıcıları
             ViewBag.PendingTrainers = await _context.AppUsers
                 .Where(u => u.Role == "Antrenör" && !u.IsApproved)
                 .ToListAsync();
 
-            // 2. Onay bekleyen Randevular (İlişkili tablolarla beraber)
+            // B) Onay bekleyen Bireysel Randevular
             ViewBag.PendingAppointments = await _context.Appointments
                 .Include(a => a.AppUser)
                 .Include(a => a.Trainer)
@@ -34,82 +36,108 @@ namespace ProjeOdeviWeb_G231210048.Controllers
                 .Where(a => a.Status == "Onay Bekliyor")
                 .ToListAsync();
 
+            // C) Onay bekleyen Grup Seansları (Sessions)
+            ViewBag.PendingSessions = await _context.Sessions
+                .Include(s => s.Trainer)
+                .Where(s => s.IsApproved == null) // Henüz karar verilmemişler
+                .ToListAsync();
+
             return View();
         }
 
-        // --- DETAY SAYFASI (ViewModel Kullanacak Şekilde Düzeltildi) ---
+        // ============================================================
+        // 2. TÜM KAYITLARI GÖRME (YENİ EKLENENLER)
+        // ============================================================
+
+        // Tüm Grup Seansları (Geçmiş ve Gelecek)
+        public async Task<IActionResult> AllSessions()
+        {
+            var sessions = await _context.Sessions
+                .Include(s => s.Trainer)
+                .OrderByDescending(s => s.SessionDate) // En yeniden eskiye
+                .ToListAsync();
+            return View(sessions);
+        }
+
+        // Tüm Bireysel Randevular (Geçmiş ve Gelecek)
+        public async Task<IActionResult> AllAppointments()
+        {
+            var appointments = await _context.Appointments
+                .Include(a => a.AppUser)
+                .Include(a => a.Trainer)
+                .Include(a => a.Service)
+                .OrderByDescending(a => a.Date).ThenBy(a => a.Time)
+                .ToListAsync();
+            return View(appointments);
+        }
+
+        // ============================================================
+        // 3. DETAY VE ONAYLAMA İŞLEMLERİ
+        // ============================================================
+
+        // Antrenör Detay Sayfası
         public async Task<IActionResult> Details(int id)
         {
-            // 1. Kullanıcıyı Bul
             var user = await _context.AppUsers.FindAsync(id);
             if (user == null) return NotFound();
 
-            // 2. Eğitmen Detaylarını Bul (İsim eşleşmesiyle)
             var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == user.FullName);
 
-            // 3. Verileri ViewModel Paketine Koy
             var model = new TrainerDetailsViewModel
             {
                 UserId = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
                 IsApproved = user.IsApproved,
-
-                // Trainer bilgileri (Eğer trainer null ise hata vermesin diye önlemler)
                 Specialization = trainer?.Specialization ?? "Belirtilmemiş",
                 WorkingHours = trainer != null ? $"{trainer.AvailableFrom:hh\\:mm} - {trainer.AvailableTo:hh\\:mm}" : "-",
                 DaysOff = trainer?.DaysOff ?? "",
                 TrainerId = trainer?.Id ?? 0
             };
 
-            // 4. Paketi Sayfaya Gönder
             return View(model);
         }
 
-        // --- KULLANICI İŞLEMLERİ (ONAYLA / SİL) ---
-
+        // Antrenör Onayla
         [HttpPost]
         public async Task<IActionResult> ApproveUser(int id)
         {
             var user = await _context.AppUsers.FindAsync(id);
             if (user != null)
             {
-                user.IsApproved = true; // Onay ver
+                user.IsApproved = true;
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index");
         }
 
+        // Antrenör Sil / Reddet
         [HttpPost]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.AppUsers.FindAsync(id);
             if (user != null)
             {
-                // 1. Önce Trainer tablosundaki kaydını da bulup silelim (Temizlik)
                 var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.FullName == user.FullName);
                 if (trainer != null)
                 {
                     _context.Trainers.Remove(trainer);
                 }
-
-                // 2. Kullanıcıyı sil
                 _context.AppUsers.Remove(user);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index");
         }
 
-        // --- RANDEVU İŞLEMLERİ (ONAYLA / REDDET) ---
-
+        // Bireysel Randevu Onayla
         [HttpPost]
         public async Task<IActionResult> ApproveAppointment(int id)
         {
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment != null)
             {
-                // ÇAKIŞMA KONTROLÜ
-                bool isConflict = _context.Appointments.Any(x =>
+                // Çakışma Kontrolü
+                bool isConflict = await _context.Appointments.AnyAsync(x =>
                     x.TrainerId == appointment.TrainerId &&
                     x.Date == appointment.Date &&
                     x.Time == appointment.Time &&
@@ -129,16 +157,48 @@ namespace ProjeOdeviWeb_G231210048.Controllers
             return RedirectToAction("Index");
         }
 
+        // Bireysel Randevu Reddet
         [HttpPost]
         public async Task<IActionResult> CancelAppointment(int id)
         {
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment != null)
             {
-                appointment.Status = "Reddedildi"; // Admin reddettiği için
+                appointment.Status = "Reddedildi";
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index");
+        }
+
+        // Grup Seansı Onayla / Reddet (Dashboard'dan gelen)
+        [HttpPost]
+        public async Task<IActionResult> ApproveSession(int id, bool decision)
+        {
+            var session = await _context.Sessions.FindAsync(id);
+            if (session != null)
+            {
+                session.IsApproved = decision; // true=Onay, false=Red
+                await _context.SaveChangesAsync();
+
+                if (decision) TempData["Success"] = "Grup seansı onaylandı.";
+                else TempData["Warning"] = "Grup seansı reddedildi.";
+            }
+            return RedirectToAction("Index");
+        }
+
+        // Grup Seansı SİL (AllSessions sayfasından gelen)
+        [HttpPost]
+        public async Task<IActionResult> DeleteSession(int id)
+        {
+            var session = await _context.Sessions.FindAsync(id);
+            if (session != null)
+            {
+                _context.Sessions.Remove(session);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Seans kalıcı olarak silindi.";
+            }
+            // İşlemi nerede yaptıysa oraya dönsün
+            return Redirect(Request.Headers["Referer"].ToString());
         }
     }
 }
